@@ -1,0 +1,88 @@
+# OS固有ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEとエディタ
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Node.js (フロントエンド)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# 環境変数ファイル
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# PHP/Laravel (バックエンド)
+vendor/
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
+
+# Laravel固有
+storage/*.key
+.env.backup
+.env.production
+.phpunit.cache
+
+# Laravelのログとキャッシュ（一部は残す）
+/backend/storage/logs/*.log
+/backend/bootstrap/cache/*.php
+!/backend/bootstrap/cache/.gitkeep
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitkeep
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitkeep
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitkeep
+
+# Docker
+docker-compose.override.yml
+
+# データベース
+*.sqlite
+*.sqlite-journal
+/backend/database/database.sqlite
+
+# テストカバレッジ
+coverage/
+*.coverage
+htmlcov/
+.nyc_output/
+
+# ログファイル
+*.log
+
+# 一時ファイル
+*.tmp
+*.temp
+.cache/
+
+# MacOS
+.AppleDouble
+.LSOverride
+.claude/settings.local.json

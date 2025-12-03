@@ -1,0 +1,39 @@
+# このファイルをプロジェクトルートに .editorconfig としてコピーして使用してください
+# EditorConfig: https://editorconfig.org
+
+root = true
+
+# すべてのファイルに適用
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# TypeScript/JavaScript/JSON
+[*.{ts,tsx,js,jsx,json,mjs}]
+indent_style = space
+indent_size = 2
+
+# PHP
+[*.php]
+indent_style = space
+indent_size = 4
+
+# YAML
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# Docker
+[Dockerfile]
+indent_style = space
+indent_size = 2
+
+[docker-compose.yml]
+indent_style = space
+indent_size = 2

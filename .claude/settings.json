@@ -1,0 +1,78 @@
+{
+  "// VS Code推奨設定": "このファイルをプロジェクトルートの.vscode/settings.jsonにコピーして使用してください",
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  "// TypeScript/JavaScript設定": "",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+
+  "// PHP設定": "",
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
+    "editor.tabSize": 4
+  },
+  "php.suggest.basic": false,
+  "php.validate.enable": false,
+
+  "// Docker設定": "",
+  "[dockerfile]": {
+    "editor.tabSize": 2
+  },
+  "[dockercompose]": {
+    "editor.tabSize": 2
+  },
+
+  "// ファイル除外設定": "",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/vendor": true
+  },
+
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/vendor/**": true
+  },
+
+  "// 検索除外設定": "",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/vendor": true,
+    "**/dist": true,
+    "**/build": true
+  },
+
+  "// Tailwind CSS": "",
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+
+  "// その他": "",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true
+}

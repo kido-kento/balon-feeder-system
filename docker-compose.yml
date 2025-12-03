@@ -1,0 +1,94 @@
+services:
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: balon-frontend
+    ports:
+      - "3100:3000"   # ← 予約システム(3000)と衝突しないよう変更
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8100/api   # ← 新APIのURL
+    depends_on:
+      - backend
+    networks:
+      - balon-network
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: balon-backend
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=balon_db          # ← 専用DB名
+      - DB_USERNAME=balon_user        # ← 専用ユーザー
+      - DB_PASSWORD=balon_pass        # ← 専用パスワード
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+    depends_on:
+      - mysql
+      - mailhog
+    networks:
+      - balon-network
+
+  # Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: balon-nginx
+    ports:
+      - "8100:80"    # ← 予約システム(8000)と衝突しないよう変更
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - balon-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: balon-mysql
+    ports:
+      - "3338:3306"   # ← 予約システム(3307)と衝突しないよう変更
+    environment:
+      - MYSQL_DATABASE=balon_db
+      - MYSQL_USER=balon_user
+      - MYSQL_PASSWORD=balon_pass
+      - MYSQL_ROOT_PASSWORD=root_password
+    volumes:
+      - balon-mysql-data:/var/lib/mysql
+    networks:
+      - balon-network
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog
+    container_name: balon-mailhog
+    ports:
+      - "1125:1025"  # ← 衝突防止
+      - "8125:8025"  # ← 衝突防止
+    networks:
+      - balon-network
+
+volumes:
+  balon-mysql-data:
+
+networks:
+  balon-network:
+    driver: bridge

@@ -1,0 +1,20 @@
+{
+  "_comment": "このファイルをプロジェクトルートに .prettierrc.json としてコピーして使用してください",
+
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "endOfLine": "lf",
+
+  "overrides": [
+    {
+      "files": "*.php",
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}
