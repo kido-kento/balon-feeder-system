@@ -1,76 +1,157 @@
-# 予約システム
+# 🐾 バロンご飯回数システム（Balon Feeder System）
 
-Next.js + Laravel + Docker で構築する予約管理システムの開発環境
+**Balon（バロン）** の給餌記録を  
+**一瞬で登録・確認できる** ミニシステムです。
 
-## 技術スタック
+Next.js（フロント） + Laravel（API） + Docker で構築。
+
+- iPhone ショートカットで「ワンタップ給餌」
+- 今日の給餌回数を AM 2:00 起点で自動カウント
+- 最新給餌時刻が UI にリアルタイム反映
+- DB で履歴を保存し、どこからでも確認可能
+
+実生活で“すぐ使える”ことを最優先にデザインしたシステム。
+
+---
+
+## 🚀 技術スタック
 
 ### フロントエンド
-- **Next.js 14.2** (App Router)
-- **React 18**
-- **TypeScript**
-- **Tailwind CSS**
+- Next.js 14.2（App Router）
+- React 18
+- TypeScript
+- Tailwind CSS
 
 ### バックエンド
-- **Laravel 12**
-- **PHP 8.3**
+- Laravel 12
+- PHP 8.3
 
 ### インフラ
-- **Docker & Docker Compose**
-- **MySQL 8.0**
-- **Nginx**
-- **Mailhog** (開発環境でのメール送信テスト用)
+- Docker / Docker Compose
+- MySQL 8.0
+- Nginx
+- Mailhog（開発用メールUI）
 
-## プロジェクト構成
+---
+
+## 📁 プロジェクト構成
 
 ```
-reservation-system/
-├── frontend/              # Next.jsアプリケーション
-│   ├── app/              # App Router
-│   ├── components/       # Reactコンポーネント
+balon-feeder-system/
+├── frontend/              # Next.js（UI）
+│   ├── app/
 │   ├── Dockerfile
 │   └── package.json
-├── backend/              # Laravelアプリケーション
+├── backend/               # Laravel（API）
 │   ├── app/
-│   ├── routes/
 │   ├── database/
+│   ├── routes/
 │   ├── Dockerfile
 │   └── composer.json
 ├── docker/
-│   └── nginx/           # Nginx設定ファイル
-├── docker-compose.yml   # Docker構成
-├── .env                 # 環境変数
+│   └── nginx/
+├── docker-compose.yml
 └── README.md
 ```
 
-## セットアップ手順
+---
 
-### 1. リポジトリのクローン（または既存プロジェクトへの移動）
+## ⚙️ セットアップ手順
 
-```bash
-cd reservation-system
-```
-
-### 2. 環境変数の設定
-
-#### バックエンド（Laravel）
+### 1. リポジトリのクローン
 
 ```bash
-# .env.example を .env にコピー
+git clone https://github.com/kido-kento/balon-feeder-system.git
+cd balon-feeder-system
+
+2. 環境変数をセット
+
+バックエンド（Laravel）
+
 cp backend/.env.example backend/.env
-
-# Application Key を生成（重要！）
 docker compose exec backend php artisan key:generate
-```
 
-**Application Key とは？**
-Laravelがセッションやパスワードなどの重要なデータを暗号化するための秘密鍵です。この手順を忘れるとアプリケーションが正常に動作しません。
+フロントエンド（Next.js）
 
-#### フロントエンド（Next.js）
-
-```bash
-# .env.local.example を .env.local にコピー
 cp frontend/.env.local.example frontend/.env.local
 ```
+NEXT_PUBLIC_API_URL の例：
+http://localhost:8100/api
+
+🐬 Docker 起動
+docker compose up -d
+
+🌐 動作確認
+
+フロント（給餌 UI）
+
+http://localhost:3100/feeding
+
+API（Laravel）
+	•	今日の集計
+GET http://localhost:8100/api/feeding/today
+	•	給餌記録
+POST http://localhost:8100/api/feeding
+
+Mailhog（開発用メールUI）
+
+http://localhost:8125
+
+📝 API レスポンス例
+{
+  "count": 4,
+  "latest": "2025-12-01 22:28:32",
+  "limit": 6
+}
+
+🧪 開発コマンド一覧
+Docker
+
+docker compose up -d
+docker compose down
+docker compose logs -f
+
+フロント（Next.js）
+
+docker compose exec frontend npm run dev
+docker compose exec frontend npm install
+
+バックエンド（Laravel）
+
+docker compose exec backend php artisan migrate
+docker compose exec backend php artisan tinker
+docker compose exec backend composer require package/name
+
+📌 ポート構成（バロン専用）
+サービス
+ホスト
+コンテナ
+説明
+frontend
+3100
+3000
+Next.js（UI）
+API（nginx）
+8100
+80
+Laravel API
+mysql
+3338
+3306
+MySQL
+mailhog UI
+8125
+8025
+メール確認
+mailhog SMTP
+1125
+1025
+SMTP
+
+
+
+--------------------------------------------------------------------
+
 
 **環境変数とは？**
 アプリケーションの動作に必要な設定値（APIのURLなど）を、環境ごとに変更できるようにする仕組みです。
