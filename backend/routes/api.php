@@ -41,3 +41,4 @@ Route::post('/feeding', [FeedingController::class, 'store']);
 
 // 今日の給餌状況を取得（GET）
 Route::get('/feeding/today', [FeedingController::class, 'today']);
+Route::get('/feeding/reset-today', [FeedingController::class, 'resetToday']);

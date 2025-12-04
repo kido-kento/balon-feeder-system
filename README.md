@@ -1,36 +1,34 @@
-# 🐾 バロンご飯回数システム（Balon Feeder System）
+# 🐾 バロンご飯管理システム（Balon Feeder System）
 
-**Balon（バロン）** の給餌記録を  
-**一瞬で登録・確認できる** ミニシステムです。
+**バロン（飼い猫）** の給餌記録を一瞬で登録・確認できるミニシステム。
 
-Next.js（フロント） + Laravel（API） + Docker で構築。
+- **ワンタップ給餌記録**: iPhoneショートカットから瞬時に記録
+- **AM 4:00起点カウント**: 深夜4時を境に「今日」をカウント（生活リズムに合わせた設計）
+- **リアルタイム表示**: 今日の給餌回数と最新給餌時刻を即座に確認
+- **履歴保存**: MySQLデータベースで全記録を永続化
+- **リセット機能**: 誤記録時に今日分をまとめてリセット可能
 
-- iPhone ショートカットで「ワンタップ給餌」
-- 今日の給餌回数を AM 2:00 起点で自動カウント
-- 最新給餌時刻が UI にリアルタイム反映
-- DB で履歴を保存し、どこからでも確認可能
-
-実生活で“すぐ使える”ことを最優先にデザインしたシステム。
+実生活で"すぐ使える"ことを最優先にデザインしたシステムです。
 
 ---
 
 ## 🚀 技術スタック
 
 ### フロントエンド
-- Next.js 14.2（App Router）
-- React 18
-- TypeScript
-- Tailwind CSS
+- **Next.js 14.2** (App Router)
+- **React 18**
+- **TypeScript**
+- **Tailwind CSS**
 
 ### バックエンド
-- Laravel 12
-- PHP 8.3
+- **Laravel 12**
+- **PHP 8.3**
+- **MySQL 8.0**
 
 ### インフラ
-- Docker / Docker Compose
-- MySQL 8.0
-- Nginx
-- Mailhog（開発用メールUI）
+- **Docker / Docker Compose**
+- **Nginx** (Laravelへのリバースプロキシ)
+- **Mailhog** (開発用メールテスト)
 
 ---
 
@@ -38,20 +36,28 @@ Next.js（フロント） + Laravel（API） + Docker で構築。
 
 ```
 balon-feeder-system/
-├── frontend/              # Next.js（UI）
+├── frontend/              # Next.js (給餌記録UI)
 │   ├── app/
+│   │   └── feeding/      # 給餌記録画面 (/feeding)
 │   ├── Dockerfile
 │   └── package.json
-├── backend/               # Laravel（API）
+├── backend/               # Laravel (給餌記録API)
 │   ├── app/
+│   │   └── Http/Controllers/
+│   │       └── FeedingController.php
 │   ├── database/
+│   │   └── migrations/
+│   │       └── 2025_12_01_*_create_feedings_table.php
 │   ├── routes/
+│   │   └── api.php
 │   ├── Dockerfile
 │   └── composer.json
 ├── docker/
 │   └── nginx/
+│       └── default.conf
 ├── docker-compose.yml
-└── README.md
+├── README.md
+└── CLAUDE.md
 ```
 
 ---
@@ -63,133 +69,132 @@ balon-feeder-system/
 ```bash
 git clone https://github.com/kido-kento/balon-feeder-system.git
 cd balon-feeder-system
-
-2. 環境変数をセット
-
-バックエンド（Laravel）
-
-cp backend/.env.example backend/.env
-docker compose exec backend php artisan key:generate
-
-フロントエンド（Next.js）
-
-cp frontend/.env.local.example frontend/.env.local
 ```
-NEXT_PUBLIC_API_URL の例：
-http://localhost:8100/api
 
-🐬 Docker 起動
+### 2. 環境変数をセット
+
+#### バックエンド（Laravel）
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+**`.env`の重要な設定値（すでにdocker-compose.ymlと同期済み）**:
+- `DB_DATABASE=balon_db`
+- `DB_USERNAME=balon_user`
+- `DB_PASSWORD=balon_pass`
+- `DB_HOST=mysql`
+
+#### Laravelアプリケーションキーの生成
+
+```bash
 docker compose up -d
+docker compose exec backend php artisan key:generate
+```
 
-🌐 動作確認
+#### フロントエンド（Next.js）
 
-フロント（給餌 UI）
+現在はdocker-compose.ymlに環境変数を直接記載しています。
+Docker以外の環境で実行する場合は以下を作成：
 
-http://localhost:3100/feeding
+```bash
+# frontend/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:8100/api
+```
 
-API（Laravel）
-	•	今日の集計
+### 3. Docker起動
+
+```bash
+docker compose up -d
+```
+
+### 4. データベースマイグレーション
+
+```bash
+docker compose exec backend php artisan migrate
+```
+
+### 5. 動作確認
+
+#### APIヘルスチェック
+
+```bash
+curl http://localhost:8100/api/health
+```
+
+または、ブラウザで `http://localhost:8100/api/health` にアクセス。
+
+#### フロントエンド（給餌記録画面）
+
+ブラウザで以下にアクセス:
+**http://localhost:3100/feeding**
+
+---
+
+## 📝 API仕様
+
+### 1. 今日の給餌状況を取得
+
+```
 GET http://localhost:8100/api/feeding/today
-	•	給餌記録
-POST http://localhost:8100/api/feeding
+```
 
-Mailhog（開発用メールUI）
-
-http://localhost:8125
-
-📝 API レスポンス例
+**レスポンス例**:
+```json
 {
   "count": 4,
   "latest": "2025-12-01 22:28:32",
   "limit": 6
 }
-
-🧪 開発コマンド一覧
-Docker
-
-docker compose up -d
-docker compose down
-docker compose logs -f
-
-フロント（Next.js）
-
-docker compose exec frontend npm run dev
-docker compose exec frontend npm install
-
-バックエンド（Laravel）
-
-docker compose exec backend php artisan migrate
-docker compose exec backend php artisan tinker
-docker compose exec backend composer require package/name
-
-📌 ポート構成（バロン専用）
-サービス
-ホスト
-コンテナ
-説明
-frontend
-3100
-3000
-Next.js（UI）
-API（nginx）
-8100
-80
-Laravel API
-mysql
-3338
-3306
-MySQL
-mailhog UI
-8125
-8025
-メール確認
-mailhog SMTP
-1125
-1025
-SMTP
-
-
-
---------------------------------------------------------------------
-
-
-**環境変数とは？**
-アプリケーションの動作に必要な設定値（APIのURLなど）を、環境ごとに変更できるようにする仕組みです。
-
-### 3. Docker環境の起動
-
-```bash
-docker compose up -d
 ```
 
-初回起動時は、イメージのビルドに時間がかかります。
+- `count`: 今日の給餌回数（AM 4:00起点）
+- `latest`: 最新の給餌時刻
+- `limit`: 1日の推奨上限回数
 
-### 4. サービスの確認
+### 2. 給餌記録を追加
 
-起動後、以下のURLでアクセスできます：
-
-- **フロントエンド (Next.js)**: http://localhost:3000
-- **バックエンド (Laravel API)**: http://localhost:8000
-- **Mailhog (メールUI)**: http://localhost:8025
-
-### 5. データベースマイグレーション（必要な場合）
-
-```bash
-docker compose exec backend php artisan migrate
+```
+POST http://localhost:8100/api/feeding
 ```
 
-## 開発コマンド
+**レスポンス例**:
+```json
+{
+  "message": "Feeding recorded successfully",
+  "count": 5,
+  "latest": "2025-12-01 23:15:10",
+  "limit": 6
+}
+```
 
-### Docker環境の管理
+### 3. 今日の記録をリセット
+
+```
+GET http://localhost:8100/api/feeding/reset-today
+```
+
+**レスポンス例**:
+```json
+{
+  "message": "Today feedings reset successfully"
+}
+```
+
+---
+
+## 🧪 開発コマンド一覧
+
+### Docker
 
 ```bash
-# コンテナの起動
+# コンテナ起動
 docker compose up -d
 
-# コンテナの停止
+# コンテナ停止
 docker compose down
 
-# ログの確認
+# ログ確認
 docker compose logs -f
 
 # 特定のサービスのログ
@@ -197,60 +202,83 @@ docker compose logs -f frontend
 docker compose logs -f backend
 ```
 
-### フロントエンド開発
+### フロントエンド（Next.js）
 
 ```bash
-# Next.jsコンテナ内でコマンド実行
+# 開発サーバー起動（自動起動されるが手動実行も可能）
 docker compose exec frontend npm run dev
 
-# 依存関係の追加
-docker compose exec frontend npm install [パッケージ名]
+# ビルド
+docker compose exec frontend npm run build
+
+# Lint実行
+docker compose exec frontend npm run lint
+
+# パッケージ追加
+docker compose exec frontend npm install パッケージ名
+
+# 依存関係再インストール
+docker compose exec frontend rm -rf node_modules package-lock.json
+docker compose exec frontend npm install
 ```
 
-### バックエンド開発
+### バックエンド（Laravel）
 
 ```bash
-# Laravelコンテナ内でコマンド実行
-docker compose exec backend php artisan [コマンド]
-
-# Composerパッケージの追加
-docker compose exec backend composer require [パッケージ名]
-
-# マイグレーションの実行
+# マイグレーション実行
 docker compose exec backend php artisan migrate
 
-# Tinkerの起動
+# マイグレーションロールバック
+docker compose exec backend php artisan migrate:rollback
+
+# Tinker起動（Laravel REPL）
 docker compose exec backend php artisan tinker
+
+# テスト実行（PHPUnit）
+docker compose exec backend php artisan test
+
+# コードフォーマット（Laravel Pint）
+docker compose exec backend ./vendor/bin/pint
+
+# Composerパッケージ追加
+docker compose exec backend composer require パッケージ名
+
+# キャッシュクリア
+docker compose exec backend php artisan cache:clear
+docker compose exec backend php artisan config:clear
+docker compose exec backend php artisan route:clear
 ```
 
 ### データベース
 
 ```bash
-# MySQLコンテナに接続
-docker compose exec mysql mysql -u reservation_user -preservation_pass reservation_db
+# MySQL接続
+docker compose exec mysql mysql -u balon_user -pbalon_pass balon_db
 ```
 
-## 環境変数
+**データベース設定**:
+- データベース名: `balon_db`
+- ユーザー名: `balon_user`
+- パスワード: `balon_pass`
+- ルートパスワード: `root_password`
 
-### ルート `.env` ファイル
-Docker Compose で使用する環境変数を定義
+---
 
-### `backend/.env` ファイル
-Laravel アプリケーションの設定
-- データベース接続設定（MySQL）
-- メール設定（Mailhog）
+## 📌 ポート構成（バロン専用）
 
-## ポート構成
-
-| サービス | ホストポート | コンテナポート | 用途 |
+| サービス | ホストポート | コンテナポート | 説明 |
 |---------|-------------|---------------|------|
-| frontend | 3000 | 3000 | Next.js開発サーバー |
-| nginx | 8000 | 80 | Laravel APIエンドポイント |
-| mysql | 3307 | 3306 | MySQLデータベース |
-| mailhog (SMTP) | 1025 | 1025 | メール送信 |
-| mailhog (UI) | 8025 | 8025 | メール管理画面 |
+| frontend | 3100 | 3000 | Next.js（給餌UI） |
+| nginx | 8100 | 80 | Laravel API |
+| mysql | 3338 | 3306 | MySQL |
+| mailhog UI | 8125 | 8025 | メール確認画面 |
+| mailhog SMTP | 1125 | 1025 | SMTP |
 
-## トラブルシューティング
+**注**: 他の予約システムプロジェクト（ポート 3000, 8000, 3307 など）との衝突を避けるため、バロン専用のポート番号を使用しています。
+
+---
+
+## 🔧 トラブルシューティング
 
 ### ポートが既に使用されている場合
 
@@ -278,16 +306,52 @@ docker compose exec backend rm -rf vendor composer.lock
 docker compose exec backend composer install
 ```
 
-## 次のステップ
+### APIが404エラーを返す
 
-環境構築が完了したら、以下の開発を進めることができます：
+1. APIルーティングが設定されているか確認: `backend/bootstrap/app.php`
+2. ルートが定義されているか確認: `backend/routes/api.php`
+3. キャッシュクリア: `docker compose exec backend php artisan route:clear`
 
-1. データベース設計とマイグレーションファイルの作成
-2. Laravel API エンドポイントの実装
-3. Next.js でのページとコンポーネント作成
-4. 認証システムの実装
-5. 予約機能の実装
+### CORSエラーが発生する
 
-## ライセンス
+1. CORS設定を確認: `backend/config/cors.php`
+2. フロントエンドのオリジン（`localhost:3100`）が許可リストに含まれているか確認
 
-未定
+---
+
+## 📱 iPhoneショートカット連携
+
+このシステムは、iPhoneの「ショートカット」アプリから以下のようなHTTPリクエストを送信することで、ワンタップで給餌記録が可能です。
+
+### ショートカット設定例
+
+1. ショートカットアプリで「新規ショートカット」を作成
+2. 「URLの内容を取得」アクションを追加
+3. 以下を設定:
+   - **URL**: `http://あなたのサーバーIP:8100/api/feeding`
+   - **メソッド**: POST
+4. 「結果を通知」アクションを追加（任意）
+
+ホーム画面にウィジェットとして配置すれば、ワンタップで給餌記録完了です。
+
+---
+
+## 🎯 次のステップ
+
+- [ ] iPhoneショートカットの実装とテスト
+- [ ] 給餌履歴を表示するページの追加
+- [ ] グラフで給餌傾向を可視化
+- [ ] 通知機能（給餌忘れアラート）
+- [ ] バロンの写真ギャラリー機能
+
+---
+
+## 📄 ライセンス
+
+MIT License
+
+---
+
+## 🐱 バロンについて
+
+バロンは我が家の大切な飼い猫です。このシステムは彼の健康管理のために作られました。

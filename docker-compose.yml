@@ -13,7 +13,7 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:8100/api   # ← 新APIのURL
+        # ← 新APIのURL
     depends_on:
       - backend
     networks:

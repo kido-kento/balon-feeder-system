@@ -9,62 +9,89 @@ use Carbon\Carbon;
 class FeedingController extends Controller
 {
     /**
-     * POST /api/feeding
-     * 記録を1件追加
+     * 今日の開始時刻（AM 4:00起点）
      */
-    public function store(Request $request)
-{
-    // 給餌を1件追加
-    DB::table('feedings')->insert([
-        'feeding_time' => Carbon::now(),
-        'amount' => 10,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-    ]);
-
-    // 今日の開始（2時）
-    $start = Carbon::today()->addHours(2);
-    if (Carbon::now()->hour < 2) {
-        $start = Carbon::yesterday()->addHours(2);
-    }
-
-    // 今日のデータを再度集計
-    $feedings = DB::table('feedings')
-        ->where('feeding_time', '>=', $start)
-        ->orderBy('feeding_time', 'desc')
-        ->get();
-
-    return response()->json([
-        'message' => 'Feeding recorded successfully',
-        'count'   => $feedings->count(),                     // 今日の回数
-        'latest'  => $feedings->first()?->feeding_time,      // 最新給餌
-        'limit'   => 6                                        // 上限数
-    ]);
-}
-
-    /**
-     * GET /api/feeding/today
-     * 今日（AM 2:00起点）の統計を返す
-     */
-    public function today()
+    private function getTodayStart(): Carbon
     {
-        // 今日の開始時刻：AM 2:00（バロン家の生活リズム対応）
-        $start = Carbon::today()->addHours(2);
+        $now = Carbon::now();
 
-        // 今がAM 2時前なら、前日の2時が開始時刻
-        if (Carbon::now()->hour < 2) {
-            $start = Carbon::yesterday()->addHours(2);
+        // 今日の 4:00
+        $start = Carbon::today()->addHours(4);
+
+        // 今が 4:00 より前なら「前日の4:00」からを今日扱い
+        if ($now->hour < 4) {
+            $start = Carbon::yesterday()->addHours(4);
         }
 
-        // 今日のデータを取得
+        return $start;
+    }
+
+    /**
+     * POST /api/feeding
+     * 明示的に1回記録する（ボタン or Siri 専用）
+     */
+    public function store(Request $request)
+    {
+        $now   = Carbon::now();
+        $start = $this->getTodayStart();
+
+        // 1件追加
+        DB::table('feedings')->insert([
+            'feeding_time' => $now,
+            'amount'       => 10,
+            'created_at'   => $now,
+            'updated_at'   => $now,
+        ]);
+
+        // 今日分を集計
         $feedings = DB::table('feedings')
             ->where('feeding_time', '>=', $start)
             ->orderBy('feeding_time', 'desc')
             ->get();
 
         return response()->json([
-            'count' => $feedings->count(),
+            'message' => 'Feeding recorded successfully',
+            'count'   => $feedings->count(),
+            'latest'  => $feedings->first()?->feeding_time,
+            'limit'   => 6,
+        ]);
+    }
+
+    /**
+     * GET /api/feeding/today
+     * 今日（4:00起点）の統計を返す
+     */
+    public function today()
+    {
+        $start = $this->getTodayStart();
+
+        $feedings = DB::table('feedings')
+            ->where('feeding_time', '>=', $start)
+            ->orderBy('feeding_time', 'desc')
+            ->get();
+
+        return response()->json([
+            'count'  => $feedings->count(),
             'latest' => $feedings->first()?->feeding_time,
+            'limit'  => 6,
+        ]);
+    }
+    /**
+     * GET /api/feeding/reset-today
+     * 今日(AM4:00起点)の記録を全部リセット
+     */
+    public function resetToday()
+    {
+        // 今日の開始（4時）- getTodayStart()を使って統一
+        $start = $this->getTodayStart();
+
+        // 今日分のレコードを全部削除
+        DB::table('feedings')
+            ->where('feeding_time', '>=', $start)
+            ->delete();
+
+        return response()->json([
+            'message' => 'Today feedings reset successfully',
         ]);
     }
 }
