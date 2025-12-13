@@ -42,3 +42,8 @@ Route::post('/feeding', [FeedingController::class, 'store']);
 // 今日の給餌状況を取得（GET）
 Route::get('/feeding/today', [FeedingController::class, 'today']);
 Route::get('/feeding/reset-today', [FeedingController::class, 'resetToday']);
+Route::get('/feeding/weekly', [FeedingController::class, 'weekly']);
+
+// 給餌記録の編集・削除（IDベース）
+Route::put('/feeding/{id}', [FeedingController::class, 'update']);
+Route::delete('/feeding/{id}', [FeedingController::class, 'delete']);

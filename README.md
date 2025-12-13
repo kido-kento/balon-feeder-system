@@ -116,18 +116,18 @@ docker compose exec backend php artisan migrate
 
 ### 5. 動作確認
 
-#### APIヘルスチェック
-
-```bash
-curl http://localhost:8100/api/health
-```
-
-または、ブラウザで `http://localhost:8100/api/health` にアクセス。
-
-#### フロントエンド（給餌記録画面）
-
 ブラウザで以下にアクセス:
-**http://localhost:3100/feeding**
+
+**http://localhost:8100/**
+
+#### 各ページ
+
+- **トップページ**: http://localhost:8100/
+- **給餌記録画面**: http://localhost:8100/feeding
+- **カレンダー**: http://localhost:8100/calendar
+- **APIヘルスチェック**: http://localhost:8100/api/health
+
+**重要**: すべての機能は **http://localhost:8100/** 経由でNginxを通してアクセスします
 
 ---
 
@@ -264,17 +264,34 @@ docker compose exec mysql mysql -u balon_user -pbalon_pass balon_db
 
 ---
 
-## 📌 ポート構成（バロン専用）
+## 📌 ポート構成とアーキテクチャ
+
+### アクセスポイント
+
+**すべてのアクセスは http://localhost:8100/ から**
+
+| URL | 機能 |
+|-----|------|
+| http://localhost:8100/ | トップページ（Next.js） |
+| http://localhost:8100/feeding | 給餌記録画面 |
+| http://localhost:8100/calendar | カレンダー |
+| http://localhost:8100/api/* | Laravel API |
+
+### Docker構成
 
 | サービス | ホストポート | コンテナポート | 説明 |
 |---------|-------------|---------------|------|
-| frontend | 3100 | 3000 | Next.js（給餌UI） |
-| nginx | 8100 | 80 | Laravel API |
+| **nginx** | **8100** | 80 | **すべてのアクセスの入り口** |
+| frontend | （3100）※未使用 | 3000 | Next.js（nginx経由でアクセス） |
+| backend | - | 9000 | Laravel（nginx経由でアクセス） |
 | mysql | 3338 | 3306 | MySQL |
 | mailhog UI | 8125 | 8025 | メール確認画面 |
 | mailhog SMTP | 1125 | 1025 | SMTP |
 
-**注**: 他の予約システムプロジェクト（ポート 3000, 8000, 3307 など）との衝突を避けるため、バロン専用のポート番号を使用しています。
+**重要**:
+- **nginx**がフロントエンド（`/`）とバックエンド（`/api/`）の両方をプロキシ
+- ポート3100は予約システムとの衝突回避のため設定されていますが、**実際には使用しません**
+- すべてNginx（ポート8100）経由でアクセス
 
 ---
 

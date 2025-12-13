@@ -34,24 +34,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 このプロジェクトは完全にDockerコンテナ化されています：
 
-- **frontend** (balon-frontend): Next.js 開発サーバー (ホストポート: 3100)
-- **backend** (balon-backend): Laravel アプリケーション
-- **nginx** (balon-nginx): Laravel へのリバースプロキシ (ホストポート: 8100)
+- **nginx** (balon-nginx): **すべてのアクセスの入り口** (ホストポート: 8100)
+  - `/` → フロントエンド（Next.js）にプロキシ
+  - `/api/` → バックエンド（Laravel）にプロキシ
+- **frontend** (balon-frontend): Next.js 開発サーバー (コンテナ内ポート: 3000)
+- **backend** (balon-backend): Laravel アプリケーション (コンテナ内ポート: 9000)
 - **mysql** (balon-mysql): MySQL 8.0 データベース (ホストポート: 3338)
 - **mailhog** (balon-mailhog): 開発環境でのメール送信テスト用 (SMTP: 1125, UI: 8125)
 
 すべてのサービスは `balon-network` ブリッジネットワークで接続されています。
 
-**注**: ポート番号は他の予約システムプロジェクト（ポート 3000, 8000, 3307など）との衝突を避けるために変更されています。
+**重要**:
+- **アクセスURLは http://localhost:8100/ のみ**
+- フロントエンド・バックエンドの両方がNginx経由で提供されます
+- ポート3100は使用しません（予約システムとの衝突回避のため設定されていますが、実際には使用していません）
+
+### Nginxのルーティング
+
+`docker/nginx/default.conf` で以下のように設定：
+
+1. **`/`** → Next.jsフロントエンド（`frontend:3000`）
+2. **`/api/`** → Laravelバックエンド（`backend:9000`）
+
+この構成により、**http://localhost:8100/** で全機能にアクセスできます。
 
 ### API通信
 
-フロントエンドは環境変数 `NEXT_PUBLIC_API_URL=http://localhost:8100/api` を使用してバックエンドAPIと通信します。
+フロントエンドは **相対パス `/api`** を使用してバックエンドAPIと通信します（同じNginx経由のため）。
 
 **重要な設定**:
 - **APIルーティング**: `backend/routes/api.php` で定義されたルートは自動的に `/api` プレフィックスが付与される
-- **CORS設定**: `backend/config/cors.php` でフロントエンド（localhost:3100）からのアクセスを許可
-- **ヘルスチェック**: `/api/health` エンドポイントでバックエンドの動作確認が可能
+- **CORS設定**: Nginx で全面許可（iPhone Safari対策）
+- **ヘルスチェック**: http://localhost:8100/api/health でバックエンドの動作確認が可能
 
 ### 給餌システムの実装詳細
 
@@ -113,12 +127,14 @@ if ($now->hour < 4) {
 # 1. コンテナ起動
 docker compose up -d
 
-# 2. バックエンドの動作確認（ヘルスチェック）
-curl http://localhost:8100/api/health
-# または、ブラウザで http://localhost:8100/api/health にアクセス
+# 2. 動作確認
+# ブラウザで http://localhost:8100/ にアクセス
 
-# 3. フロントエンドの確認（給餌記録画面）
-# ブラウザで http://localhost:3100/feeding にアクセス
+# バックエンドAPIのヘルスチェック
+curl http://localhost:8100/api/health
+
+# 給餌記録画面
+# http://localhost:8100/feeding
 
 # ログ確認
 docker compose logs -f [service-name]

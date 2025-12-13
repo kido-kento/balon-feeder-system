@@ -25,6 +25,14 @@ class FeedingController extends Controller
 
         return $start;
     }
+        /**
+     * feeding_time を「バロン家の日付」に変換する（AM4:00区切り）
+     * 例）2025-12-13 03:30 → 前日扱い
+     */
+    private function toBalonDayKey(Carbon $dt): string
+    {
+        return $dt->copy()->subHours(4)->format('Y-m-d');
+    }
 
     /**
      * POST /api/feeding
@@ -92,6 +100,108 @@ class FeedingController extends Controller
 
         return response()->json([
             'message' => 'Today feedings reset successfully',
+        ]);
+    }
+        /**
+     * GET /api/feeding/weekly?start_date=2025-12-07
+     * 指定した日付から7日分（AM4:00起点）のログを返す
+     * start_date を省略した場合は今日から過去6日分
+     */
+    public function weekly(Request $request)
+    {
+        // start_date パラメータがあればそれを使用、なければ今日
+        if ($request->has('start_date')) {
+            $startDate = Carbon::parse($request->start_date)->addHours(4);
+        } else {
+            $startDate = $this->getTodayStart()->subDays(6);
+        }
+
+        $endDate = $startDate->copy()->addDays(6)->endOfDay();
+
+        $rows = DB::table('feedings')
+            ->where('feeding_time', '>=', $startDate)
+            ->where('feeding_time', '<=', $endDate)
+            ->orderBy('feeding_time', 'asc')
+            ->get(['id', 'feeding_time']);
+
+        // 7日分の枠を先に作る（0回の日も出すため）
+        $days = [];
+        for ($i = 0; $i < 7; $i++) {
+            $dayStart = $startDate->copy()->addDays($i);
+            $key = $this->toBalonDayKey($dayStart);
+
+            $days[$key] = [
+                'date'  => $key,
+                'count' => 0,
+                'records' => [], // [{id, time}]
+            ];
+        }
+
+        foreach ($rows as $r) {
+            $dt = Carbon::parse($r->feeding_time);
+            $key = $this->toBalonDayKey($dt);
+
+            if (!isset($days[$key])) continue;
+
+            $days[$key]['count']++;
+            $days[$key]['records'][] = [
+                'id'   => $r->id,
+                'time' => $dt->format('H:i'),
+                'full_time' => $r->feeding_time,
+            ];
+        }
+
+        $dayList = array_values($days);
+
+        $total = array_sum(array_column($dayList, 'count'));
+        $avg = round($total / 7, 2);
+
+        $underfedDays = array_values(array_map(
+            fn($d) => $d['date'],
+            array_filter($dayList, fn($d) => $d['count'] < 5)
+        ));
+
+        return response()->json([
+            'avg'          => $avg,
+            'underfedDays' => $underfedDays,
+            'days'         => $dayList,
+        ]);
+    }
+        /**
+     * DELETE /api/feeding/{id}
+     * IDを指定して1件削除
+     */
+    public function delete($id)
+    {
+        DB::table('feedings')
+            ->where('id', $id)
+            ->delete();
+
+        return response()->json([
+            'message' => 'Feeding deleted',
+        ]);
+    }
+
+    /**
+     * PUT /api/feeding/{id}
+     * IDを指定して時刻を更新
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'new_feeding_time' => 'required|date',
+        ]);
+
+        $updated = DB::table('feedings')
+            ->where('id', $id)
+            ->update([
+                'feeding_time' => $request->new_feeding_time,
+                'updated_at'   => Carbon::now(),
+            ]);
+
+        return response()->json([
+            'message' => 'Feeding updated',
+            'updated' => $updated,
         ]);
     }
 }

@@ -4,6 +4,47 @@
 
 ---
 
+## 🔴 最重要: アーキテクチャ
+
+**作成日**: 2025-12-05
+
+### システム構成の真実
+
+このプロジェクトは**予約システムの環境をコピーして作成**されたため、一部混乱が生じていました。
+
+#### 正しいアクセス方法
+
+**すべてのアクセスは http://localhost:8100/ のみ**
+
+- ❌ ~~http://localhost:3100/~~ （エラーが出る・使用していない）
+- ✅ http://localhost:8100/ （正しいアクセスポイント）
+
+#### Nginx がすべてを制御
+
+```
+ユーザー
+    ↓
+http://localhost:8100/
+    ↓
+[Nginx] (ポート8100)
+    ├─ / → frontend:3000 (Next.js)
+    └─ /api/ → backend:9000 (Laravel)
+```
+
+#### なぜこの構成？
+
+1. **iPhone Safariからのアクセス対応**（CORS問題の回避）
+2. **フロントエンド・バックエンドの統一URL**（`/api`で相対パス指定可能）
+3. **予約システムとの並行開発**（ポート衝突回避）
+
+#### 開発時の注意
+
+- フロントエンドの環境変数は **相対パス `/api`** を使用
+- `docker-compose.yml`のポート3100は設定されているが**未使用**
+- すべてのテストは http://localhost:8100/ で実施
+
+---
+
 ## API開発
 
 ### `/api/health` エンドポイントについて
@@ -27,19 +68,19 @@
 docker compose up -d
 
 # ヘルスチェック実行
-curl http://localhost:8000/api/health
+curl http://localhost:8100/api/health
 ```
 
 **2. ブラウザから確認**
 ```
-http://localhost:8000/api/health
+http://localhost:8100/api/health
 ```
 
 **3. フロントエンド（Next.js）から確認**
 ```typescript
 async function checkBackendConnection() {
   try {
-    const response = await fetch('http://localhost:8000/api/health');
+    const response = await fetch('/api/health'); // 相対パス
     const data = await response.json();
 
     if (data.status === 'ok') {
