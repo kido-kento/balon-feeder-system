@@ -1,0 +1,37 @@
+FROM php:8.3-fpm
+
+# システム依存関係をインストール
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
+
+# キャッシュクリア
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# PHP拡張機能をインストール
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Composerを取得
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# 作業ディレクトリを設定
+WORKDIR /var/www/html
+
+# アプリケーションファイルをコピー
+COPY --chown=www-data:www-data . /var/www/html
+
+# Composer依存関係をインストール（本番環境用）
+RUN composer install --optimize-autoloader --no-dev
+
+# ストレージとキャッシュディレクトリのパーミッション設定
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# ポート9000を公開してphp-fpmサーバーを起動
+EXPOSE 9000
+CMD ["php-fpm"]
