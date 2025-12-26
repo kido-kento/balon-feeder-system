@@ -98,7 +98,7 @@ export default function FeedingPage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center text-white p-4 sm:p-6 md:p-8"
       style={{
-        backgroundImage: "url(/balon-background.webp)",
+        backgroundImage: "url(/balon-background3.webp)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
